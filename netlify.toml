@@ -3,12 +3,10 @@
   publish = "public"
   functions = "netlify/functions"
 
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
+# This is the "Single Page App" rule. 
+# It ensures that any direct URL request loads the main index.html file.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
