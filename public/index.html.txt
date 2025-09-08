@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>과학고 입시 AI 면접 시뮬레이터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+         .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="app" class="w-full max-w-4xl mx-auto p-4">
+
+        <!-- 1. 로그인 화면 -->
+        <div id="login-screen" class="card p-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">과학고 입시 AI 면접 시뮬레이터</h1>
+            <p class="text-gray-600 mb-6">비밀번호를 입력하여 면접 연습을 시작하세요.</p>
+            <div class="flex justify-center">
+                <input type="password" id="password-input" class="border-2 border-gray-300 rounded-lg px-4 py-2 w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="비밀번호">
+            </div>
+            <button id="login-button" class="btn btn-primary mt-6">
+                <span id="login-btn-text">연습 시작하기</span>
+                 <svg id="login-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </button>
+            <p id="error-message" class="text-red-500 mt-4 h-5"></p>
+        </div>
+
+        <!-- 2. 학교 선택 화면 -->
+        <div id="school-screen" class="hidden card p-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">학교 선택</h1>
+            <p class="text-gray-600 mb-8">면접을 준비할 학교를 선택해주세요.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button data-school="busan" class="school-button card p-8 hover:bg-blue-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <span class="text-5xl mb-4">🏫</span>
+                    <h2 class="text-2xl font-bold text-blue-700">부산과학고</h2>
+                </button>
+                <button data-school="ilsan" class="school-button card p-8 hover:bg-green-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <span class="text-5xl mb-4">🏛️</span>
+                    <h2 class="text-2xl font-bold text-green-700">부산일과학고</h2>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. 카테고리 선택 화면 -->
+        <div id="category-screen" class="hidden card p-8">
+            <h1 id="category-title" class="text-3xl font-bold text-gray-800 mb-2 text-center">면접 분야 선택</h1>
+            <p class="text-gray-600 mb-8 text-center">연습하고 싶은 분야를 선택해주세요.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button data-category="math" class="category-button card p-8 hover:bg-indigo-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <span class="text-5xl mb-4">🧮</span>
+                    <h2 class="text-2xl font-bold text-indigo-700 text-center">수학</h2>
+                </button>
+                <button data-category="science" class="category-button card p-8 hover:bg-teal-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    <span class="text-5xl mb-4">🔬</span>
+                    <h2 class="text-2xl font-bold text-teal-700 text-center">과학</h2>
+                </button>
+            </div>
+            <div class="mt-8 text-center">
+                <button id="back-to-school" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                    학교 선택으로
+                </button>
+            </div>
+        </div>
+        
+        <!-- 4. 연습 방식 선택 화면 -->
+        <div id="practice-mode-screen" class="hidden card p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">연습 방식 선택</h1>
+            <p class="text-gray-600 mb-8 text-center">어떻게 연습하시겠습니까?</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <button data-mode="random" class="practice-mode-button card p-8 hover:bg-sky-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    <span class="text-4xl mb-4">🎲</span>
+                    <h2 class="text-xl font-bold text-sky-700 text-center">랜덤 기출문제 풀기</h2>
+                </button>
+                <button data-mode="topic" class="practice-mode-button card p-8 hover:bg-amber-50 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <span class="text-4xl mb-4">✍️</span>
+                    <h2 class="text-xl font-bold text-amber-700 text-center">주제 지정해서 질문받기</h2>
+                </button>
+            </div>
+             <div class="mt-8 text-center">
+                <button id="back-to-category" class="btn btn-secondary">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                    분야 선택으로
+                </button>
+            </div>
+        </div>
+
+        <!-- 5. 주제 입력 화면 -->
+        <div id="topic-input-screen" class="hidden card p-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2 text-center">주제 입력</h1>
+            <p class="text-gray-600 mb-6 text-center">AI에게 질문받고 싶은 주제를 입력해주세요.</p>
+            <div class="flex flex-col items-center">
+                <input type="text" id="topic-input" class="border-2 border-gray-300 rounded-lg px-4 py-2 w-full max-w-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="예: 뉴턴의 운동 법칙, 광합성 등">
+                <button id="generate-question-button" class="btn btn-primary mt-6">
+                    <span id="generate-btn-text">AI 질문 생성하기</span>
+                    <svg id="generate-spinner" class="animate-spin h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+            </div>
+             <div class="mt-8 text-center">
+                <button id="back-to-mode" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                    연습 방식 선택으로
+                </button>
+            </div>
+        </div>
+
+
+        <!-- 6. 면접 연습 화면 -->
+        <div id="practice-screen" class="hidden">
+            <div class="card p-8 mb-6">
+                <p id="question-category" class="text-indigo-600 font-semibold mb-2"></p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">면접 문항</h2>
+                <p id="question-text" class="text-gray-700 text-lg leading-relaxed"></p>
+            </div>
+            <div class="card p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">답변 입력</h2>
+                <textarea id="answer-textarea" class="w-full h-48 border-2 border-gray-300 rounded-lg p-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="이곳에 답변을 입력하세요..."></textarea>
+                <div class="flex justify-between items-center mt-4">
+                     <button id="back-to-mode-from-practice" class="btn btn-secondary">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                        이전 단계로
+                    </button>
+                    <button id="submit-answer-button" class="btn btn-primary">답변 제출 및 피드백 받기</button>
+                </div>
+            </div>
+
+            <!-- AI 피드백 섹션 -->
+            <div id="feedback-section" class="hidden mt-6">
+                <div class="card p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        AI 피드백
+                    </h2>
+                    <div id="feedback-content" class="text-gray-700 leading-relaxed prose max-w-none">
+                        <div id="loading-spinner" class="flex items-center justify-center">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>피드백을 생성 중입니다. 잠시만 기다려주세요...</span>
+                        </div>
+                        <div id="feedback-result"></div>
+                    </div>
+                    <div id="next-actions" class="hidden mt-6 flex flex-wrap gap-4 justify-center">
+                        <button id="next-question-button" class="btn btn-primary">다음 문항</button>
+                        <button id="continue-topic-button" class="btn btn-primary">같은 주제로 계속하기</button>
+                        <button id="new-topic-button" class="btn btn-secondary">새로운 주제</button>
+                        <button id="end-session-button" class="btn btn-secondary">연습 종료</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. 최종 결과 화면 -->
+        <div id="report-screen" class="hidden card p-8">
+             <h1 class="text-3xl font-bold text-gray-800 mb-4 text-center">면접 연습 종합 리포트</h1>
+             <div id="report-content" class="text-gray-700 leading-relaxed prose max-w-none">
+                <div id="report-loading-spinner" class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>종합 리포트를 생성 중입니다...</span>
+                </div>
+                <div id="report-result"></div>
+             </div>
+             <div class="text-center mt-8">
+                <button id="restart-button" class="btn btn-primary">다시 연습하기</button>
+             </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        let db;
+
+        const questions = [
+            // 수학 (부산일과학고)
+            { school: ['ilsan'], category: 'math', question: '유리수와 무리수의 정의는 무엇이며, 유리수와 무리수의 합은 항상 무리수인지 그 이유를 설명하시오.', modelAnswer: '유리수는 두 정수의 비(분수 형태, 분모는 0이 아님)로 나타낼 수 있는 수이고, 무리수는 그렇게 나타낼 수 없는 수, 즉 순환하지 않는 무한소수입니다. 유리수(a)와 무리수(b)의 합(a+b)이 유리수(c)라고 가정하면, b = c-a가 되어 유리수에서 유리수를 뺀 결과는 유리수이므로, b가 무리수라는 가정에 모순됩니다. 따라서 둘의 합은 항상 무리수입니다.' },
+            { school: ['ilsan'], category: 'math', question: '\'9의 제곱근\'과 \'제곱근 9\'는 어떻게 다른지 설명하시오.', modelAnswer: '\'9의 제곱근\'은 제곱해서 9가 되는 모든 수로, +3과 -3 두 개를 의미합니다. 반면 \'제곱근 9\'는 루트 9(√9)를 읽은 것으로, 제곱근 중 양수인 양의 제곱근만을 의미하므로 +3 하나만을 가리킵니다.' },
+            { school: ['ilsan'], category: 'math', question: '두 자연수의 최대공약수(GCD)와 최소공배수(LCM)의 관계를 설명하고, 두 수의 곱과 어떤 관련이 있는지 설명하시오.', modelAnswer: '두 자연수의 곱은 그 두 수의 최대공약수와 최소공배수의 곱과 같습니다. 두 자연수 A, B를 최대공약수 G를 이용하여 A=Ga, B=Gb (a, b는 서로소)로 나타내면, 최소공배수 L은 Gab입니다. 따라서 G × L = G × (Gab) = G²ab 이고, A × B = (Ga) × (Gb) = G²ab 이므로 둘은 같습니다.' },
+            { school: ['ilsan'], category: 'math', question: '확률의 수학적 정의는 무엇이며, 주사위 두 개를 동시에 던질 때, 나온 눈의 합이 5일 확률을 구하는 과정을 설명하시오.', modelAnswer: '확률이란 모든 경우의 수에 대한 특정 사건이 일어나는 경우의 수의 비율입니다. 주사위 두 개를 던질 때 모든 경우의 수는 6 × 6 = 36가지입니다. 합이 5가 되는 경우는 (1,4), (2,3), (3,2), (4,1)의 4가지입니다. 따라서 확률은 4/36, 즉 1/9입니다.' },
+            { school: ['ilsan'], category: 'math', question: '농도가 다른 두 소금물을 섞어 새로운 농도의 소금물을 만드는 문제를 해결할 때, 어떤 물리량을 기준으로 방정식을 세워야 하는지 설명하시오.', modelAnswer: '용액이 섞여도 변하지 않는 \'소금의 양(용질의 양)\'을 기준으로 방정식을 세웁니다. (A 소금물 속 소금의 양) + (B 소금물 속 소금의 양) = (혼합 소금물 속 소금의 양) 이라는 등식을 세우고, 각 소금의 양은 (농도/100) × (소금물의 양) 공식을 이용하여 계산합니다.' },
+            { school: ['ilsan'], category: 'math', question: '이차방정식 ax²+bx+c=0 (a≠0)이 서로 다른 두 실근을 가질 조건을 판별식을 이용하여 설명하시오.', modelAnswer: '이차방정식이 서로 다른 두 실근을 가지려면 판별식 D = b² - 4ac 의 값이 0보다 커야 합니다. 판별식이 0보다 크다는 것은 근의 공식에서 루트 안의 값이 양수임을 의미하여, 서로 다른 두 개의 실근이 존재함을 보장합니다.' },
+            { school: ['ilsan'], category: 'math', question: '이차방정식의 근과 계수의 관계를 이용하여, 두 근의 합과 곱이 주어졌을 때 이차방정식을 만드는 방법을 설명하시오.', modelAnswer: '두 근을 α, β라고 할 때, 두 근의 합이 p, 곱이 q라면, 이 두 수를 근으로 갖는 이차방정식은 (x-α)(x-β)=0, 즉 x²-(α+β)x+αβ=0 으로 나타낼 수 있습니다. 따라서 x² - px + q = 0 (이차항 계수가 1일 때) 과 같이 방정식을 세울 수 있습니다.' },
+            { school: ['ilsan'], category: 'math', question: '이차함수 y = ax² + bx + c 의 그래프가 x축과 한 점에서 만날(접할) 조건을 판별식을 이용하여 설명하시오.', modelAnswer: '이차함수의 그래프가 x축과 한 점에서 만난다는 것은 대응되는 이차방정식 ax² + bx + c = 0 이 중근을 갖는다는 의미입니다. 따라서 판별식 D = b² - 4ac = 0 이어야 합니다.' },
+            { school: ['ilsan'], category: 'math', question: '이차함수 y=x²의 그래프를 x축 방향으로 p만큼, y축 방향으로 q만큼 평행이동한 그래프의 식은 무엇이며, 꼭짓점의 좌표는 어떻게 변하는지 설명하시오.', modelAnswer: '평행이동한 그래프의 식은 y = (x-p)² + q 입니다. y=x²의 꼭짓점은 (0,0)이었으므로, 평행이동 후 꼭짓점의 좌표는 (p,q)가 됩니다.' },
+            { school: ['ilsan'], category: 'math', question: '삼각형의 닮음 조건 3가지(SSS, SAS, AA)를 설명하시오.', modelAnswer: 'SSS 닮음은 세 쌍의 대응변의 길이의 비가 같을 때, SAS 닮음은 두 쌍의 대응변의 길이의 비가 같고 그 끼인 각의 크기가 같을 때, AA 닮음은 두 쌍의 대응각의 크기가 각각 같을 때 두 삼각형은 닮음이 됩니다.' },
+            { school: ['ilsan'], category: 'math', question: '직각삼각형 ABC의 꼭짓점 A에서 빗변 BC에 내린 수선의 발을 H라 할 때, 생성되는 세 개의 직각삼각형(△ABC, △HBA, △HAC)이 모두 닮음인 이유를 설명하시오.', modelAnswer: '세 삼각형 모두 직각을 가지고 있으며, △HBA는 ∠B를, △HAC는 ∠C를 원래의 △ABC와 공통으로 가집니다. 따라서 세 삼각형은 두 각의 크기가 같은 AA 닮음 조건을 만족하여 모두 서로 닮음 관계에 있습니다.' },
+            { school: ['ilsan'], category: 'math', question: '임의의 사각형의 각 변의 중점을 연결하면 어떤 사각형이 만들어지는지, 그리고 그 이유를 삼각형의 중점 연결 정리를 이용하여 설명하시오.', modelAnswer: '평행사변형이 만들어집니다. 사각형 ABCD의 중점을 각각 P, Q, R, S라 하고 대각선 AC를 그으면, 삼각형 ABC에서 중점 연결 정리에 의해 선분 PQ는 대각선 AC와 평행하고 그 길이는 절반입니다. 마찬가지로 삼각형 ADC에서 선분 SR도 AC와 평행하고 길이가 절반입니다. 따라서 한 쌍의 대변(PQ, SR)이 평행하고 길이가 같으므로, 사각형 PQRS는 평행사변형입니다.' },
+            { school: ['ilsan'], category: 'math', question: '삼각형의 내심과 외심의 정의는 각각 무엇이며, 둔각삼각형의 외심은 삼각형의 내부에 있는지 외부에 있는지 설명하시오.', modelAnswer: '내심은 삼각형의 세 내각의 이등분선의 교점으로 항상 삼각형 내부에 있습니다. 외심은 세 변의 수직이등분선의 교점입니다. 둔각삼각형의 경우, 가장 긴 변의 수직이등분선이 다른 두 수직이등분선과 만나는 점이 삼각형의 외부에 위치하게 되므로, 외심은 삼각형의 외부에 있습니다.' },
+            { school: ['ilsan'], category: 'math', question: '소수와 합성수의 정의는 무엇이며, 어떤 자연수 N이 소수인지 판별하는 효율적인 방법을 설명하시오.', modelAnswer: '소수는 1보다 큰 자연수 중에서 1과 자기 자신만을 약수로 가지는 수이고, 합성수는 1보다 큰 자연수 중에서 소수가 아닌 수입니다. 어떤 자연수 N이 소수인지 판별하려면, 2부터 N의 제곱근(√N)까지의 소수들로 나누어 떨어지는지를 확인하면 됩니다. 만약 나누어 떨어지는 소수가 하나도 없으면 그 수는 소수이고, 하나라도 있으면 합성수입니다.' },
+            { school: ['ilsan'], category: 'math', question: '피타고라스 정리를 설명하고, 세 변의 길이가 각각 5cm, 12cm, 13cm인 삼각형이 직각삼각형임을 어떻게 확인할 수 있는지 설명하시오.', modelAnswer: '피타고라스 정리는 직각삼각형에서 빗변의 길이를 제곱한 값은 나머지 두 변의 길이를 각각 제곱하여 더한 값과 같다는 정리입니다(a²+b²=c²). 주어진 삼각형에서 가장 긴 변인 13의 제곱(169)이 나머지 두 변 5의 제곱(25)과 12의 제곱(144)의 합(25+144=169)과 같으므로, 피타고라스 정리의 역이 성립하여 이 삼각형은 직각삼각형임을 알 수 있습니다.' },
+            { school: ['ilsan'], category: 'math', question: '함수의 정의는 무엇이며, 연립방정식의 해가 두 일차함수의 그래프와 어떤 기하학적 관계를 갖는지 설명하시오.', modelAnswer: '함수는 두 변수 x, y에 대하여 x의 값이 하나 정해지면 그에 따라 y의 값이 오직 하나씩 정해지는 대응 관계입니다. 연립방정식의 각 일차방정식은 좌표평면에서 하나의 직선으로 나타낼 수 있으며, 연립방정식의 해(x, y)는 두 직선 그래프의 교점의 좌표와 같습니다.' },
+            { school: ['ilsan'], category: 'math', question: '원의 중심각과 원주각의 관계를 설명하고, 지름에 대한 원주각의 크기가 항상 90도인 이유를 설명하시오.', modelAnswer: '한 호에 대한 원주각의 크기는 그 호에 대한 중심각의 크기의 절반입니다. 지름은 원의 중심을 지나는 현으로, 지름에 대한 중심각은 180도입니다. 따라서 지름에 대한 원주각의 크기는 중심각의 절반인 90도가 됩니다.' },
+            { school: ['ilsan'], category: 'math', question: '정사각형과 마름모의 공통점과 차이점은 무엇인지 대각선의 성질을 중심으로 설명하시오.', modelAnswer: '공통점은 두 대각선이 서로를 수직이등분한다는 것입니다. 차이점은 정사각형은 두 대각선의 길이가 같지만, 마름모는 일반적으로 두 대각선의 길이가 다르다는 점입니다.' },
+            { school: ['ilsan'], category: 'math', question: '어떤 수 x를 5로 나누면 나머지가 3이고, 7로 나누면 나머지가 4라고 합니다. 이러한 조건을 만족하는 x를 찾는 방법을 설명하시오.', modelAnswer: '중국의 나머지 정리를 이용하거나, 수의 규칙성을 찾아 해결할 수 있습니다. x는 5로 나누면 나머지가 3이므로 5a+3 꼴이고, 7로 나누면 4가 남으므로 7b+4 꼴입니다. 5a+3 = 7b+4 를 만족하는 a, b를 찾으면 됩니다. 또는, 7로 나눴을 때 4가 남는 수들 (4, 11, 18, 25, 32, ...) 중에서 5로 나눴을 때 3이 남는 첫 번째 수 18을 찾고, 5와 7의 최소공배수인 35를 이용하여 일반해 x = 35k + 18 (k는 정수)를 구할 수 있습니다.' },
+            { school: ['ilsan'], category: 'math', question: '어떤 일을 완성하는데 A는 10일, B는 15일이 걸린다고 합니다. 두 사람이 함께 이 일을 한다면 며칠이 걸리는지 구하는 과정을 설명하시오.', modelAnswer: '전체 일의 양을 1로 둡니다. 그러면 A가 하루에 하는 일의 양은 1/10이고, B가 하루에 하는 일의 양은 1/15입니다. 두 사람이 함께 일하면 하루에 (1/10 + 1/15) 만큼의 일을 할 수 있습니다. 이를 계산하면 3/30 + 2/30 = 5/30 = 1/6 입니다. 따라서 두 사람이 함께 하루에 전체의 1/6을 하므로, 일을 모두 마치려면 6일이 걸립니다.' },
+            { school: ['ilsan'], category: 'math', question: 'A, B, C 세 사람이 가위바위보를 한 번 할 때 나올 수 있는 모든 경우의 수는 몇 가지이며, 세 사람 중 한 명만 이길 확률은 얼마인지 설명하시오.', modelAnswer: 'A, B, C가 낼 수 있는 경우는 각각 3가지이므로, 모든 경우의 수는 3 × 3 × 3 = 27가지입니다. 한 명만 이기는 경우는 (A가 가위로 이길 때, B,C는 보), (A가 바위로 이길 때), (A가 보로 이길 때) 등 A, B, C가 각각 이기는 경우 3가지와 가위,바위,보 3가지를 곱하여 총 3 × 3 = 9가지 입니다. 따라서 확률은 9/27, 즉 1/3입니다.' },
+            { school: ['ilsan'], category: 'math', question: '정육면체를 한 평면으로 자를 때 나올 수 있는 단면의 모양에는 어떤 것들이 있는지 가능한 많이 말해보시오.', modelAnswer: '자를 때 평면이 몇 개의 면을 지나느냐에 따라 다양한 도형이 나올 수 있습니다. 삼각형(정삼각형 포함), 사각형(정사각형, 직사각형, 마름모, 사다리꼴 포함), 오각형, 그리고 육각형(정육각형 포함)이 가능합니다.' },
+            { school: ['ilsan'], category: 'math', question: '이등변삼각형의 두 밑각의 크기가 같은 이유를 삼각형의 합동 조건을 이용하여 설명하시오.', modelAnswer: '이등변삼각형 ABC에서 AB=AC일 때, 꼭지각 A의 이등분선이 밑변 BC와 만나는 점을 D라고 합시다. 그러면 삼각형 ABD와 삼각형 ACD에서, AB=AC(가정), ∠BAD=∠CAD(각의 이등분), 선분 AD는 공통이므로 두 삼각형은 SAS 합동입니다. 따라서 대응각인 ∠B와 ∠C의 크기는 같습니다.' },
+            { school: ['ilsan'], category: 'math', question: '좌표평면 위의 두 점 사이의 거리를 구하는 공식을 설명하고, 이 공식이 피타고라스 정리와 어떻게 관련되는지 설명하시오.', modelAnswer: '두 점 A(x₁, y₁), B(x₂, y₂) 사이의 거리는 √((x₂-x₁)² + (y₂-y₁)²) 입니다. 이는 좌표평면 위에 두 점을 잇는 선분을 빗변으로 하고, 각 축에 평행한 선분들을 나머지 두 변으로 하는 직각삼각형을 그렸을 때, 피타고라스 정리를 적용한 것과 같습니다. 두 변의 길이는 각각 |x₂-x₁|과 |y₂-y₁|이 됩니다.' },
+            { school: ['ilsan'], category: 'math', question: '어떤 네 자리 자연수가 4의 배수가 되기 위한 조건은 무엇이며, 그 이유를 설명하시오.', modelAnswer: '마지막 두 자리 수가 4의 배수이거나 00이면 됩니다. 네 자리 수를 1000a + 100b + 10c + d 라고 표현할 때, 1000a와 100b는 모두 100의 배수이므로 항상 4의 배수입니다. 따라서 전체 수가 4의 배수가 되려면 나머지 부분인 10c + d, 즉 마지막 두 자리 수가 4의 배수이기만 하면 됩니다.' },
+            { school: ['ilsan'], category: 'math', question: '1부터 100까지의 자연수 중 약수의 개수가 3개인 수는 어떤 수들이며, 그 이유는 무엇인지 설명하시오.', modelAnswer: '약수의 개수가 3개인 수는 소수의 제곱수입니다. 소수 p의 제곱수 p²의 약수는 1, p, p² 세 개뿐입니다. 1부터 100 사이의 소수의 제곱수는 2²=4, 3²=9, 5²=25, 7²=49 이므로 총 4개입니다.' },
+            { school: ['ilsan'], category: 'math', question: '100 이하의 자연수 중 약수의 개수가 홀수인 수는 어떤 특징을 가지며, 그 이유는 무엇인지 설명하시오.', modelAnswer: '약수의 개수가 홀수인 수는 제곱수입니다. 약수는 보통 두 수의 곱으로 쌍을 이루는데, 제곱수의 경우 제곱근이 자기 자신과 쌍을 이루므로 약수의 개수가 홀수가 됩니다.'},
+            { school: ['ilsan'], category: 'math', question: '두 직선이 한 점에서 만날 때 생기는 맞꼭지각의 크기가 서로 같은 이유를 설명하시오.', modelAnswer: '두 직선이 만나면 네 개의 각이 생깁니다. 한 각과 그 이웃한 각의 합은 평각인 180도입니다. 맞꼭지각은 서로 공통된 각의 이웃각이므로, 각각 180도에서 같은 크기의 각을 뺀 값이 되어 그 크기가 서로 같을 수밖에 없습니다.' },
+            { school: ['ilsan'], category: 'math', question: '순환소수를 분수로 나타내는 방법을 설명하고, 0.999...가 왜 1과 같은지 증명하시오.', modelAnswer: 'x = 0.999... 로 둡니다. 소수점 아래 순환마디가 하나이므로 양변에 10을 곱하면 10x = 9.999... 입니다. 두 식을 빼면 9x = 9 이므로, x = 1 이 됩니다. 따라서 0.999...는 1과 같습니다.'},
+
+            // --- 과학 (부산일과학고) ---
+            { school: ['ilsan'], category: 'science', question: '힘의 정의는 무엇이며, 1N(뉴턴)은 어느 정도의 크기인지 설명해보시오.', modelAnswer: '힘이란 물체의 모양이나 운동 상태를 변화시키는 원인입니다. 1N은 질량 1kg인 물체에 작용하여 1m/s²의 가속도를 생기게 하는 힘의 크기로, 지구에서는 대략 100g의 물체를 들어 올리는 데 필요한 힘과 비슷합니다.' },
+            { school: ['ilsan'], category: 'science', question: '평지보다 오르막길을 오를 때 더 힘이 드는 이유를 역학적으로 설명하시오.', modelAnswer: '오르막에서는 중력이 나아가는 방향의 반대 방향으로 분해되어 작용하기 때문입니다. 평지에서는 수직으로만 작용하던 중력이, 오르막에서는 경사면을 따라 아래로 끌어당기는 힘(분력)으로 추가 작용하여 이를 이겨내기 위해 더 많은 에너지가 필요합니다.'},
+            { school: ['ilsan'], category: 'science', question: '부력이란 무엇이며, 물체의 부력을 측정할 수 있는 실험을 설계해보시오.', modelAnswer: '부력은 유체(액체나 기체)가 물체를 위로 밀어 올리는 힘입니다. 부력 측정 실험으로는, 먼저 용수철저울로 물체의 공기 중 무게를 잰 후, 물체를 물에 완전히 잠기게 하여 다시 무게를 측정합니다. 공기 중 무게와 물속에서의 무게 차이가 그 물체가 받는 부력의 크기와 같습니다.' },
+            { school: ['ilsan'], category: 'science', question: '잠수함이 물속에서 깊이를 조절하며 뜨거나 가라앉는 원리를 설명해보시오.', modelAnswer: '잠수함은 내부에 있는 평형수 탱크(ballast tank)에 물을 채우거나 빼서 무게를 조절하여 깊이를 조절합니다. 탱크에 물을 채워 잠수함의 전체 무게가 부력보다 커지면 가라앉고, 압축 공기로 물을 빼내 무게가 부력보다 작아지면 떠오릅니다.' },
+            { school: ['ilsan'], category: 'science', question: '서울에서 부산까지 시속 80km로 갔다가, 같은 길을 시속 100km로 돌아왔습니다. 전체 경로의 평균 속력은 왜 산술평균인 시속 90km가 아닌지 설명하시오.', modelAnswer: '시속 90km보다 작습니다. 평균 속력은 총 이동 거리를 총 걸린 시간으로 나눈 값입니다. 같은 거리를 이동할 때, 더 느린 속력인 시속 80km로 갈 때 걸린 시간이 더 깁니다. 따라서 전체 평균 속력은 시간이 더 오래 걸린 느린 속력 쪽에 더 큰 영향을 받으므로, 단순 산술 평균보다 낮은 값이 나옵니다.'},
+            { school: ['ilsan'], category: 'science', question: '등가속도 운동이란 무엇이며, 시간에 따른 속도 그래프는 어떤 모양으로 나타나는지 설명하시오.', modelAnswer: '등가속도 운동은 물체의 속도가 일정한 비율로 변하는 운동을 말합니다. 이 운동에서 시간에 따른 속도 그래프(v-t 그래프)는 기울기가 일정한 직선 형태로 나타나며, 이 직선의 기울기는 가속도를 의미합니다.'},
+            { school: ['ilsan'], category: 'science', question: '잠수부가 내뿜은 공기 방울이 수면으로 올라오면서 점점 커지는 이유는 무엇인가요? (보일의 법칙)', modelAnswer: '수면으로 올라올수록 수압이 낮아지기 때문입니다. 일정 온도에서 기체의 부피는 압력에 반비례한다는 보일의 법칙에 따라, 주변 압력이 낮아지면 공기 방울 내부 기체의 부피가 커지게 됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '물질에 열을 가하면 부피가 팽창하는 이유(열팽창)는 무엇인가요?', modelAnswer: '물질을 구성하는 입자들은 끊임없이 운동하고 있습니다. 열을 가하면 입자들이 에너지를 얻어 더 활발하게 운동하게 되고, 이로 인해 입자들 사이의 평균 거리가 멀어지면서 전체적인 부피가 팽창하게 됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '페트병을 이용해 구름을 만드는 실험(단열 팽창 실험)의 원리를 설명하고, 실험이 더 잘 되게 하려면 어떻게 해야 할까요?', modelAnswer: '페트병의 압력을 급격히 낮추면 내부 공기가 단열 팽창하면서 온도가 이슬점 아래로 내려가 수증기가 응결하여 구름이 만들어집니다. 실험이 더 잘 되게 하려면, 응결핵 역할을 할 향 연기를 약간 넣거나, 페트병 안에 물을 소량 넣어 내부를 습하게 만들면 좋습니다.'},
+            { school: ['ilsan'], category: 'science', question: '소리의 3요소는 무엇이며, 각각이 우리에게 어떻게 다르게 인식되는지 설명해보시오.', modelAnswer: '소리의 3요소는 세기, 높낮이, 맵시(음색)입니다. \'세기\'는 진폭에 따라 결정되며 큰 소리와 작은 소리로 인식됩니다. \'높낮이\'는 진동수에 따라 결정되며 높은 음과 낮은 음으로 구분됩니다. \'맵시\'는 파동의 모양(파형)에 따라 결정되며, 같은 세기와 높낮이라도 악기나 사람의 목소리가 다르게 들리는 이유가 됩니다.' },
+            { school: ['ilsan'], category: 'science', question: '볼록 렌즈와 오목 렌즈는 빛을 어떻게 변화시키며, 각각 어떤 종류의 상을 만드나요?', modelAnswer: '볼록 렌즈는 빛을 모으는 성질이 있고, 물체의 위치에 따라 실물보다 크거나 작은 실상, 또는 허상을 만들 수 있습니다. 반면 오목 렌즈는 빛을 퍼지게 하는 성질이 있으며, 항상 실제 물체보다 작은 허상만을 만듭니다.' },
+            { school: ['ilsan'], category: 'science', question: '전압, 전류, 저항의 개념을 각각 설명하고, 이 세 가지의 관계(옴의 법칙)를 설명하시오.', modelAnswer: '전압은 전류를 흐르게 하는 능력, 전류는 전하의 흐름, 저항은 전류의 흐름을 방해하는 정도를 의미합니다. 옴의 법칙에 따라, 회로에 흐르는 전류의 세기는 전압에 비례하고 저항에 반비례합니다 (I = V/R).' },
+            { school: ['ilsan'], category: 'science', question: '서로 다른 두 물체를 마찰할 때 정전기가 발생하는 원리는 무엇인가요?', modelAnswer: '물체는 원자로 이루어져 있고, 원자는 원자핵과 전자로 구성됩니다. 서로 다른 물체를 마찰하면 한 물체에서 다른 물체로 전자가 쉽게 이동하게 됩니다. 이때 전자를 잃은 물체는 (+)전하를 띠고, 전자를 얻은 물체는 (-)전하를 띠게 되면서 정전기가 발생합니다.' },
+            { school: ['ilsan'], category: 'science', question: '검전기를 (+)전하로 대전시키는 방법을 설명하고, 어떤 원리가 사용되었는지 말해보시오.', modelAnswer: '손가락을 검전기 금속판에 댄 채로 (+)대전체를 가까이 한 후, 손가락을 먼저 떼고 대전체를 치우면 됩니다. 이는 정전기 유도 현상을 이용한 것으로, 전자가 손을 통해 들어와 금속 전체가 (+)전하보다 많아지게 됩니다. (편집자 주: 원문은 (+)전하로 대전시키는 것이었으나, 일반적인 유도 대전 방식은 반대 전하로 대전시키는 것이므로 수정함. 만약 접촉시킨다면 같은 전하로 대전됨)'},
+            { school: ['ilsan'], category: 'science', question: '대전된 검전기의 전하 종류(+ 또는 -)를 확인하는 실험 방법을 설명해보시오.', modelAnswer: '이미 전하의 종류를 알고 있는 대전체(예: (+)전하를 띤 유리 막대)를 검전기의 금속판에 가까이 가져가 봅니다. 이때 금속박이 더 벌어지면 검전기는 유리 막대와 같은 (+)전하로 대전된 것이고, 오므라들면 반대인 (-)전하로 대전된 것입니다.'},
+            { school: ['ilsan'], category: 'science', question: '돌턴의 원자설의 주요 내용은 무엇이며, 현대 과학에서 수정된 부분은 무엇인지 설명하시오.', modelAnswer: '돌턴의 원자설은 1) 원자는 더 이상 쪼갤 수 없다, 2) 같은 원소의 원자는 크기와 질량이 같다, 3) 원자는 다른 원자로 변하지 않는다는 내용을 담고 있습니다. 하지만 현대 과학에서 원자는 양성자, 중성자, 전자로 쪼개질 수 있고, 같은 원소라도 중성자 수가 다른 동위원소가 존재하며, 핵반응을 통해 다른 원소로 변할 수 있다는 점이 밝혀져 수정되었습니다.'},
+            { school: ['ilsan'], category: 'science', question: '아보가드로 법칙이란 무엇이며, 이 법칙이 화학 반응에서 양적 관계를 이해하는 데 어떻게 도움이 되는지 설명하시오.', modelAnswer: '아보가드로 법칙은 온도와 압력이 같을 때, 모든 기체는 같은 부피 속에 같은 수의 분자를 포함한다는 법칙입니다. 이 법칙 덕분에 기체 반응에서 부피비가 곧 분자 수의 비와 같다는 것을 알 수 있게 되었고, 이를 통해 화학 반응식의 계수를 결정하고 반응물과 생성물의 양적 관계를 쉽게 파악할 수 있게 되었습니다.'},
+            { school: ['ilsan'], category: 'science', question: '물리 변화와 화학 변화의 근본적인 차이점은 무엇이며, 각각의 예를 들어 설명해보시오.', modelAnswer: '물리 변화는 물질의 고유한 성질(분자 자체)은 변하지 않으면서 모양, 크기, 상태 등만 변하는 현상입니다. (예: 물이 얼음이 되는 것) 반면 화학 변화는 물질이 원래의 성질을 잃고 전혀 다른 새로운 물질(새로운 분자)로 변하는 현상입니다. (예: 철이 녹스는 것)'},
+            { school: ['ilsan'], category: 'science', question: '촛농이 녹는 것은 물리 변화이고, 심지가 타는 것은 화학 변화입니다. 이 둘을 어떻게 구분할 수 있는지 실험을 설계하여 설명하시오.', modelAnswer: '촛농이 녹았다 굳은 것은 다시 가열하면 녹으므로 성질이 변하지 않은 물리 변화입니다. 반면, 타고 남은 심지는 다시 불을 붙여도 타지 않으므로 성질이 변한 화학 변화입니다. 또한, 타는 심지 위에 집기병을 덮어 석회수를 넣으면 뿌옇게 흐려지는 것으로 이산화탄소라는 새로운 물질이 생성되었음을 확인하여 화학 변화임을 알 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '질량 보존 법칙이란 무엇이며, 이 법칙이 성립하는 이유를 원자의 관점에서 설명해보시오.', modelAnswer: '질량 보존 법칙은 화학 반응이 일어날 때, 반응 전 물질의 총 질량과 반응 후 생성된 물질의 총 질량이 같다는 법칙입니다. 이는 화학 반응 시 물질을 구성하는 원자들이 사라지거나 새로 생기지 않고, 원자들의 배열만 달라져 새로운 물질을 만들기 때문입니다.'},
+            { school: ['ilsan'], category: 'science', question: '일정 성분비 법칙에 대해 설명하고, 이 법칙이 화합물과 혼합물을 구분하는 기준이 되는 이유를 설명하시오.', modelAnswer: '일정 성분비 법칙은 하나의 화합물을 구성하는 원소들은 항상 일정한 질량비로 결합한다는 법칙입니다. 혼합물은 섞는 비율을 마음대로 조절할 수 있지만, 화합물은 이 법칙에 따라 성분비가 일정하므로 둘을 구분하는 중요한 기준이 됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '기체 반응 법칙이란 무엇이며, 이를 확인할 수 있는 실험을 설계해보시오.', modelAnswer: '기체 반응 법칙은 기체들이 반응하여 새로운 기체를 생성할 때, 각 기체의 부피 사이에는 간단한 정수비가 성립한다는 법칙입니다. 예를 들어, 물 전기분해 장치에서 수소 기체와 산소 기체가 2:1의 부피비로 발생하는 것을 통해 이 법칙을 확인할 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '샤를 법칙이란 무엇이며, 이 법칙을 시각적으로 확인할 수 있는 간단한 실험을 설계해보시오.', modelAnswer: '샤를 법칙은 압력이 일정할 때, 기체의 부피는 절대 온도에 비례한다는 법칙입니다. J자관 한쪽에 공기를 넣고 수은으로 막은 뒤, 이 J자관을 물중탕하면서 온도 변화에 따른 공기 기둥의 부피 변화를 측정하여 확인할 수 있습니다. 온도가 높아질수록 부피가 일정하게 증가하는 것을 볼 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '압력솥으로 밥을 지으면 밥이 더 빨리 되는 원리를 기체의 성질과 관련지어 설명하시오.', modelAnswer: '압력솥은 수증기를 가두어 내부 압력을 높입니다. 액체의 끓는점은 외부 압력이 높을수록 함께 높아지므로, 압력솥 안의 물은 100℃보다 더 높은 온도에서 끓게 됩니다. 더 높은 온도로 밥을 짓기 때문에 음식이 더 빠르고 맛있게 익게 됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '원소, 원자, 분자의 개념을 각각 설명하고, 각각의 예를 한 가지씩 들어보시오.', modelAnswer: '원소는 물질을 이루는 가장 기본적인 성분(종류)으로 수소, 산소 등이 있습니다. 원자는 물질을 구성하는 가장 작은 입자로, 원자핵과 전자로 구성됩니다. 분자는 물질의 성질을 가지는 가장 작은 입자로, 여러 원자가 결합하여 이루어집니다. (예: 물 분자 H₂O)'},
+            { school: ['ilsan'], category: 'science', question: '라부아지에가 물 분해 실험을 통해 무엇을 밝혀냈으며, 그 실험은 어떤 의미를 가지나요?', modelAnswer: '라부아지에는 뜨겁게 달군 주철관에 수증기를 통과시켜 수소 기체가 발생하고 주철관은 녹스는(산화철) 것을 확인했습니다. 이를 통해 물이 분해될 수 있는 화합물이며, 수소와 산소라는 원소로 이루어져 있음을 증명하여, 물이 원소라는 기존의 생각을 뒤집었습니다.'},
+            { school: ['ilsan'], category: 'science', question: '순수한 물은 전류가 잘 흐르지 않는데, 그 이유는 무엇이며 물을 전기 분해하려면 어떻게 해야 하나요?', modelAnswer: '순수한 물은 이온이 거의 없어 전류가 잘 흐르지 않습니다. 따라서 전류를 잘 흐르게 해주는 전해질(예: 수산화나트륨)을 소량 녹인 후 전기를 가하면, (+)극에서는 산소 기체가, (-)극에서는 수소 기체가 2:1의 부피비로 발생하며 분해됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '물이 다른 액체에 비해 비열이 큰 특징을 가집니다. 이러한 특징이 우리 생활과 생명체에 미치는 긍정적인 영향은 무엇이 있을까요?', modelAnswer: '물의 비열이 크다는 것은 온도가 쉽게 변하지 않는다는 뜻입니다. 이 덕분에 사람의 체온이 일정하게 유지될 수 있으며, 해안 지역이 내륙 지역보다 기온 변화가 적습니다. 또한, 찜질팩이나 자동차 냉각수로도 활용됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '컵에 담긴 찬물 표면에 물방울이 맺히는 현상을 과학적으로 설명해보시오.', modelAnswer: '이 현상은 공기 중의 수증기가 응결하여 발생합니다. 컵 주변의 공기가 차가운 컵 표면에 닿으면서 냉각되어 온도가 이슬점 아래로 내려가고, 기체 상태의 수증기가 액체 상태인 물방울로 변하게(응결) 되는 것입니다.'},
+            { school: ['ilsan'], category: 'science', question: '용해도란 무엇이며, 용해도에 영향을 미치는 요인에는 어떤 것들이 있나요?', modelAnswer: '용해도란 일정한 온도에서 용매 100g에 최대로 녹을 수 있는 용질의 g 수를 의미합니다. 고체의 용해도는 주로 온도에 따라 변하고(대부분 온도가 높을수록 증가), 기체의 용해도는 온도와 압력 모두에 영향을 받습니다(온도가 낮고 압력이 높을수록 증가).'},
+            { school: ['ilsan'], category: 'science', question: '어는점 내림 현상이란 무엇이며, 이 원리를 이용하여 어는점을 측정하는 실험을 설계해보시오.', modelAnswer: '어는점 내림은 순수한 용매에 다른 용질이 녹아들어 갔을 때 용액의 어는점이 낮아지는 현상입니다. 시험관에 물을 넣고 얼음과 소금을 섞은 냉각제에 넣어 어는점(0℃)을 측정한 후, 다른 시험관에는 같은 양의 물에 소금을 녹인 후 같은 방식으로 어는점을 측정합니다. 소금물의 어는점이 0℃보다 낮게 측정되는 것을 통해 이 현상을 확인할 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '불꽃 반응 실험으로 원소의 종류를 어떻게 구별할 수 있는지 원리를 설명하시오.', modelAnswer: '특정 금속 원소들은 불꽃에 넣었을 때 고유의 색깔을 나타냅니다. 이는 원소마다 다른 에너지 준위를 가진 전자가 열에너지를 흡수했다가 방출하면서 특정한 파장의 빛을 내놓기 때문입니다. 이 불꽃색을 통해 원소의 종류를 구별할 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '선 스펙트럼이란 무엇이며, 불꽃 반응에서 나타나는 원소의 스펙트럼이 왜 선 스펙트럼으로 나타나는지 설명하시오.', modelAnswer: '선 스펙트럼은 빛을 분광기로 관찰했을 때, 특정 파장의 빛만 밝은 선으로 나타나는 스펙트럼입니다. 원자 속 전자는 정해진 에너지 궤도에만 존재하는데, 열에너지를 흡수하여 들뜬 상태가 되었다가 다시 안정된 상태로 내려오면서 특정 에너지에 해당하는 빛만 방출하기 때문에 불연속적인 선 스펙트럼이 나타납니다.'},
+            { school: ['ilsan'], category: 'science', question: '앙금 생성 반응이란 무엇이며, 이를 이용해 수돗물에 염화 이온이 있는지 확인하는 방법을 설명하시오.', modelAnswer: '앙금 생성 반응은 특정 이온들이 만나 물에 잘 녹지 않는 고체(앙금)를 만드는 반응입니다. 수돗물에 질산 은(AgNO₃) 용액을 떨어뜨렸을 때 흰색 앙금인 염화 은(AgCl)이 생성된다면, 수돗물에 염화 이온(Cl⁻)이 존재한다는 것을 확인할 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '제설제로 사용되는 염화칼슘이 눈을 녹이는 원리는 무엇인가요?', modelAnswer: '염화칼슘이 물에 녹으면서 어는점을 낮추기 때문입니다. 순수한 물의 어는점은 0℃이지만, 염화칼슘 수용액은 어는점이 영하로 크게 내려가기 때문에, 0℃보다 낮은 온도에서도 눈이 얼지 않고 녹은 상태를 유지하게 됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '메테인(CH₄)의 완전 연소 반응식을 쓰고, 생성 물질을 확인할 수 있는 실험을 설계해보시오.', modelAnswer: '메테인이 완전 연소하면 이산화탄소와 물이 생성됩니다 (CH₄ + 2O₂ → CO₂ + 2H₂O). 생성된 기체를 석회수에 통과시켜 뿌옇게 흐려지는 것으로 이산화탄소를 확인하고, 차가운 유리판에 닿게 하여 물방울이 맺히는 것으로 물의 생성을 확인할 수 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '과산화수소가 이산화 망가니즈를 촉매로 하여 분해될 때의 화학 반응식을 설명하시오.', modelAnswer: '과산화수소는 이산화 망가니즈라는 정촉매에 의해 물과 산소로 빠르게 분해됩니다 (2H₂O₂ → 2H₂O + O₂). 이산화 망가니즈 자체는 반응에 참여하지 않고 반응 속도만 빠르게 해줍니다.'},
+            { school: ['ilsan'], category: 'science', question: '탄산수소나트륨(NaHCO₃)을 가열하면 어떤 물질들로 분해되는지 설명하고, 이때 일어나는 변화가 화학 변화인 이유를 설명하시오.', modelAnswer: '탄산수소나트륨을 가열하면 탄산나트륨, 물, 이산화탄소라는 새로운 물질이 생성됩니다. 이처럼 원래 물질의 성질과 전혀 다른 새로운 물질이 생성되었으므로 이는 화학 변화입니다.'},
+
+            // 생명과학
+            { school: ['ilsan'], category: 'science', question: '식물 내에서 물이 뿌리부터 잎까지 이동하는 경로와 그 원동력을 설명하시오.', modelAnswer: '물은 뿌리털에서 흡수되어 물관을 통해 줄기를 거쳐 잎까지 이동합니다. 이 이동의 주된 원동력은 잎에서 일어나는 증산 작용입니다. 증산 작용으로 잎의 물이 수증기 형태로 빠져나가면 물관 내에 장력이 발생하여 아래의 물을 계속해서 끌어올리게 됩니다.' },
+            { school: ['ilsan'], category: 'science', question: '광합성이 일어나는 장소와 광합성에 필요한 물질, 그리고 생성되는 물질은 무엇인지 설명하시오.', modelAnswer: '광합성은 식물 세포의 엽록체에서 일어납니다. 광합성에는 빛 에너지, 이산화탄소, 그리고 뿌리에서 흡수한 물이 필요합니다. 이 물질들을 이용하여 포도당과 같은 양분을 만들고 산소를 방출합니다.' },
+            { school: ['ilsan'], category: 'science', question: '광합성에 빛과 이산화탄소가 필수적임을 각각 증명할 수 있는 실험을 설계해보시오.', modelAnswer: '빛 조건: 두 개의 식물 중 하나는 빛에, 다른 하나는 암상자에 둡니다. 일정 시간 후 잎을 아이오딘 반응시키면 빛을 받은 식물에서만 녹말이 검출됩니다. 이산화탄소 조건: 두 식물 중 하나는 물과 함께, 다른 하나는 이산화탄소 흡수제(KOH)와 함께 밀폐시킵니다. 빛을 비춘 후 아이오딘 반응을 보면 이산화탄소가 공급된 식물에서만 녹말이 검출됩니다.'},
+            { school: ['ilsan'], category: 'science', question: '세포 호흡이 필요한 이유는 무엇이며, 이 과정에서 어떤 물질이 사용되고 생성되는지 설명하시오.', modelAnswer: '세포 호흡은 생명 활동에 필요한 에너지를 얻기 위해 필수적입니다. 이 과정은 주로 세포의 미토콘드리아에서 일어나며, 포도당과 같은 유기 양분과 산소를 사용하여 이산화탄소, 물, 그리고 다량의 에너지(ATP)를 생성합니다.' },
+            { school: ['ilsan'], category: 'science', question: '호르몬과 신경의 차이점을 신호 전달 방식과 효과의 범위, 지속성 측면에서 비교하여 설명하시오.', modelAnswer: '신경은 뉴런을 통해 전기적 신호를 빠르고 좁은 범위에 전달하며 효과가 일시적입니다. 반면 호르몬은 혈액을 통해 화학 물질을 느리고 넓은 범위에 전달하며 효과가 비교적 지속적입니다. 신경은 즉각적인 반응에, 호르몬은 성장이나 생식과 같은 지속적인 조절에 주로 관여합니다.' },
+            { school: ['ilsan'], category: 'science', question: '자극에 대한 반응 경로 중, 의식적인 반응과 무조건 반사의 차이를 설명하시오.', modelAnswer: '의식적인 반응은 자극이 감각 신경을 통해 대뇌로 전달되어 판단 과정을 거친 후 운동 신경으로 명령이 내려가는 경로를 따릅니다. 반면, 뜨거운 것에 손을 떼는 것과 같은 무조건 반사는 자극이 대뇌까지 가지 않고 척수나 연수와 같은 반사 중추에서 바로 운동 신경으로 명령을 내려 매우 빠르게 일어나는 반응으로, 위험으로부터 몸을 보호하는 역할을 합니다.' },
+            { school: ['ilsan'], category: 'science', question: '사람의 호흡 운동 원리에 대해 설명하시오. 공기는 어떻게 폐로 들어오고 나가게 되나요?', modelAnswer: '호흡 운동은 횡격막과 갈비뼈의 움직임으로 인한 흉강의 부피와 압력 변화로 일어납니다. 숨을 들이쉴 때(들숨)는 횡격막이 내려가고 갈비뼈가 올라가 흉강 부피가 커지고 내부 압력이 낮아져 공기가 들어옵니다. 반대로 숨을 내쉴 때(날숨)는 횡격막과 갈비뼈가 제자리로 돌아가 흉강 부피가 작아지고 압력이 높아져 공기가 밖으로 나갑니다.' },
+            { school: ['ilsan'], category: 'science', question: '혈액의 구성 성분은 무엇이며, 각각의 기능에 대해 설명하시오.', modelAnswer: '혈액은 액체 성분인 혈장과 세포 성분인 혈구(적혈구, 백혈구, 혈소판)로 구성됩니다. 혈장은 영양소와 노폐물을 운반하고, 적혈구는 산소를 운반하며, 백혈구는 식균 작용으로 몸을 방어하고, 혈소판은 혈액 응고에 관여합니다.' },
+            { school: ['ilsan'], category: 'science', question: '생물 다양성이란 무엇이며, 유전적 다양성, 종 다양성, 생태계 다양성을 각각 설명해보시오.', modelAnswer: '생물 다양성은 유전적, 종, 생태계 수준의 다양성을 모두 포함합니다. 유전적 다양성은 같은 종 내 개체들의 유전자가 다른 정도, 종 다양성은 일정 지역 내 생물 종의 다양한 정도, 생태계 다양성은 숲, 습지, 갯벌 등 생태계 자체의 다양한 정도를 의미합니다.'},
+            { school: ['ilsan'], category: 'science', question: '생태계 평형이 안정적으로 유지되기 위한 조건은 무엇인지 설명하시오.', modelAnswer: '안정적인 생태계가 유지되려면 생산자, 소비자, 분해자의 균형이 맞아야 하고, 먹이 그물이 복잡하게 얽혀 있어야 합니다. 또한 에너지의 흐름이 원활하고 물질 순환이 잘 일어나야 하며, 생물 종 다양성이 높게 유지되어야 합니다.' },
+
+            // 지구과학
+            { school: ['ilsan'], category: 'science', question: '바람은 왜 부는지 기압과 관련지어 설명해보시오.', modelAnswer: '바람은 공기의 압력 차이, 즉 기압 차이 때문에 발생합니다. 공기는 항상 기압이 높은 고기압 지역에서 기압이 낮은 저기압 지역으로 이동하는데, 이러한 공기의 수평적인 흐름이 바로 바람입니다. 기압 차이가 클수록 바람은 더 강하게 붑니다.' },
+            { school: ['ilsan'], category: 'science', question: '해륙풍은 어떤 원리로 낮과 밤에 부는 방향이 달라지는지 설명해보시오.', modelAnswer: '낮에는 비열이 작은 육지가 바다보다 빨리 데워져 육지에 저기압, 바다에 고기압이 형성되어 바다에서 육지로 해풍이 붑니다. 밤에는 반대로 육지가 빨리 식어 고기압, 바다가 저기압이 되어 육지에서 바다로 육풍이 붑니다. 이는 물질의 비열 차이에 따른 기압 변화 때문입니다.' },
+            { school: ['ilsan'], category: 'science', question: '고기압과 저기압은 어떻게 형성되며, 각각의 중심에서 날씨는 어떠할까요?', modelAnswer: '고기압은 하강 기류가 발생하여 공기가 압축되면서 형성되며, 날씨가 맑습니다. 저기압은 상승 기류가 발생하여 공기가 팽창하면서 형성되며, 구름이 생기고 비나 눈이 올 가능성이 높습니다.'},
+            { school: ['ilsan'], category: 'science', question: '이슬점이란 무엇이며, 일상생활에서 이슬점과 관련된 현상의 예를 들어 설명해보시오.', modelAnswer: '이슬점은 공기 중의 수증기가 응결하여 물방울이 맺히기 시작하는 온도를 말합니다. 일상생활에서는 이른 새벽 풀잎에 맺히는 이슬, 차가운 음료수 컵 표면에 물방울이 맺히는 현상, 겨울철 실내 창문에 김이 서리는 현상 등이 이슬점과 관련이 있습니다.'},
+            { school: ['ilsan'], category: 'science', question: '구름이 생성되는 과정을 공기의 상승, 단열 팽창, 수증기 응결과 관련지어 설명해보시오.', modelAnswer: '지표면의 공기 덩어리가 상승하면 주변의 기압이 낮아져 부피가 팽창(단열 팽창)하고 온도가 내려갑니다. 온도가 이슬점 이하로 떨어지면 공기 중의 수증기가 작은 물방울이나 얼음 알갱이로 응결하여 하늘에 떠 있는 상태가 되는데, 이것이 바로 구름입니다.' },
+            { school: ['ilsan'], category: 'science', question: '화성암, 퇴적암, 변성암은 각각 어떻게 생성되며, 이들을 구별할 수 있는 주요 특징은 무엇인가요?', modelAnswer: '화성암은 마그마가 식어서 만들어지며 결정 구조가 특징입니다. 퇴적암은 퇴적물이 쌓이고 굳어져 만들어지며 층리와 화석이 발견될 수 있습니다. 변성암은 기존 암석이 높은 열과 압력을 받아 변성된 것으로, 광물들이 압력 방향에 수직으로 배열된 엽리 구조가 특징입니다.'},
+            { school: ['ilsan'], category: 'science', question: '화산암과 심성암은 생성 과정에서 어떤 차이가 있으며, 이로 인해 나타나는 암석 조직의 차이는 무엇인가요?', modelAnswer: '화산암은 마그마가 지표 근처에서 빠르게 식어서 만들어져 결정의 크기가 작은 세립질 조직을 보입니다. 반면 심성암은 마그마가 지하 깊은 곳에서 천천히 식어서 만들어져 결정의 크기가 큰 조립질 조직을 보입니다.'},
+            { school: ['ilsan'], category: 'science', question: '달의 위상이 변하는 이유와, 우리가 항상 달의 같은 면만 보는 이유는 무엇인지 설명하시오.', modelAnswer: '달의 위상이 변하는 것은 달이 지구 주위를 공전하면서 태양, 지구, 달의 상대적인 위치가 계속 변하기 때문입니다. 이로 인해 우리가 보는 달의 모습, 즉 태양 빛을 반사하는 부분이 달라집니다. 한편, 우리가 항상 달의 같은 면만 보는 이유는 달의 자전 주기와 공전 주기가 약 27.3일로 같기 때문입니다.' },
+            { school: ['ilsan'], category: 'science', question: '막대기의 그림자를 이용하여 지구의 크기를 측정하는 원리를 설명하시오.', modelAnswer: '동일한 경도상의 두 지역에서 같은 시각에 막대의 그림자 각도를 측정합니다. 두 지역 사이의 거리와 그림자 각도 차이를 이용하면, 원의 호의 길이는 중심각에 비례한다는 원리를 적용하여 지구 전체의 둘레와 반지름을 계산할 수 있습니다. 이는 고대 그리스의 에라토스테네스가 사용했던 방법입니다.' },
+            { school: ['ilsan'], category: 'science', question: '동해와 서해의 염분 차이가 발생하는 이유는 무엇인가요?', modelAnswer: '서해는 중국의 여러 큰 강들로부터 많은 양의 담수가 유입되어 염분이 동해보다 낮습니다. 반면 동해는 강수량과 증발량이 비슷하고 큰 강의 유입이 적어 상대적으로 높은 염분을 유지합니다.'},
+            { school: ['ilsan'], category: 'science', question: '하천의 자정 작용이란 무엇이며, 이 작용이 잘 일어나기 위한 조건은 무엇인가요?', modelAnswer: '자정 작용이란 오염 물질이 하천에 유입되었을 때, 희석, 확산, 미생물에 의한 분해 등 물리적, 화학적, 생물학적 과정을 통해 스스로 정화되는 능력을 말합니다. 이 작용은 유속이 빠르고, 용존 산소량이 풍부하며, 수온이 적절하고, 다양한 미생물이 서식할 때 더 활발하게 일어납니다.' }
+        ];
+
+        // --- 상태 관리 ---
+        let currentSchool = null;
+        let currentCategory = null;
+        let practiceMode = null; // 'random' or 'topic'
+        let currentTopic = null;
+        let remainingQuestions = [];
+        let currentQuestion = null;
+        let sessionHistory = [];
+        const markdownConverter = new showdown.Converter();
+
+        // --- DOM 요소 ---
+        const screens = {
+            login: document.getElementById('login-screen'),
+            school: document.getElementById('school-screen'),
+            category: document.getElementById('category-screen'),
+            practiceMode: document.getElementById('practice-mode-screen'),
+            topicInput: document.getElementById('topic-input-screen'),
+            practice: document.getElementById('practice-screen'),
+            report: document.getElementById('report-screen')
+        };
+        const passwordInput = document.getElementById('password-input');
+        const loginButton = document.getElementById('login-button');
+        const loginBtnText = document.getElementById('login-btn-text');
+        const loginSpinner = document.getElementById('login-spinner');
+        const errorMessage = document.getElementById('error-message');
+        const schoolButtons = document.querySelectorAll('.school-button');
+        const categoryTitle = document.getElementById('category-title');
+        const categoryButtons = document.querySelectorAll('.category-button');
+        const practiceModeButtons = document.querySelectorAll('.practice-mode-button');
+        const topicInput = document.getElementById('topic-input');
+        const generateQuestionButton = document.getElementById('generate-question-button');
+        const generateBtnText = document.getElementById('generate-btn-text');
+        const generateSpinner = document.getElementById('generate-spinner');
+        const questionCategory = document.getElementById('question-category');
+        const questionText = document.getElementById('question-text');
+        const answerTextarea = document.getElementById('answer-textarea');
+        const submitAnswerButton = document.getElementById('submit-answer-button');
+        const feedbackSection = document.getElementById('feedback-section');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const feedbackResult = document.getElementById('feedback-result');
+        const nextActions = document.getElementById('next-actions');
+        const nextQuestionButton = document.getElementById('next-question-button');
+        const continueTopicButton = document.getElementById('continue-topic-button');
+        const newTopicButton = document.getElementById('new-topic-button');
+        const endSessionButton = document.getElementById('end-session-button');
+        const reportContent = document.getElementById('report-content');
+        const reportLoadingSpinner = document.getElementById('report-loading-spinner');
+        const reportResult = document.getElementById('report-result');
+        const restartButton = document.getElementById('restart-button');
+        const backToSchoolButton = document.getElementById('back-to-school');
+        const backToCategoryButton = document.getElementById('back-to-category');
+        const backToModeButton = document.getElementById('back-to-mode');
+        const backToModeFromPracticeButton = document.getElementById('back-to-mode-from-practice');
+
+        // --- 화면 전환 함수 ---
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+        }
+        
+        // --- Firebase 초기화 ---
+        async function initializeFirebase() {
+             try {
+                const response = await fetch('/.netlify/functions/api', {
+                    method: 'POST',
+                    body: JSON.stringify({ type: 'firebase-config' })
+                });
+                if (!response.ok) throw new Error('Could not fetch Firebase config.');
+                const { firebaseConfig } = await response.json();
+
+                const app = initializeApp(JSON.parse(firebaseConfig));
+                db = getFirestore(app);
+                const auth = getAuth(app);
+                
+                await signInAnonymously(auth);
+                console.log("Firebase initialized and user signed in anonymously.");
+
+            } catch (error) {
+                console.error("Firebase 초기화 에러:", error);
+                errorMessage.textContent = '인증 서버에 연결할 수 없습니다.';
+                loginButton.disabled = true;
+            }
+        }
+
+
+        // --- 핵심 로직 ---
+        async function handleLogin() {
+            const enteredPassword = passwordInput.value;
+            if (!enteredPassword) {
+                 showError('비밀번호를 입력해주세요.');
+                 return;
+            }
+
+            loginBtnText.classList.add('hidden');
+            loginSpinner.classList.remove('hidden');
+            loginButton.disabled = true;
+
+            try {
+                const appId = location.hostname; // Netlify P
+                const docPath = `password`;
+                const docRef = doc(db, docPath);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const correctPassword = docSnap.data().value;
+                    if (enteredPassword === correctPassword) {
+                        showScreen('school');
+                    } else {
+                        showError('비밀번호가 올바르지 않습니다.');
+                    }
+                } else {
+                     showError(`DB에 비밀번호가 없습니다. Firestore 경로(password)를 확인하세요.`);
+                     console.error(`Password document does not exist at path: ${docPath}. Please ensure the document is created according to the setup guide.`);
+                }
+            } catch (error) {
+                showError('로그인 중 오류가 발생했습니다.');
+                console.error("Error during login:", error);
+            } finally {
+                loginBtnText.classList.remove('hidden');
+                loginSpinner.classList.add('hidden');
+                loginButton.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            passwordInput.classList.add('border-red-500');
+            setTimeout(() => {
+                errorMessage.textContent = '';
+                passwordInput.classList.remove('border-red-500');
+            }, 5000); // Show error for 5 seconds
+        }
+
+        function handleSchoolSelect(school) {
+            currentSchool = school;
+            const schoolName = school === 'busan' ? '부산과학고' : '부산일과학고';
+            categoryTitle.textContent = `${schoolName} 면접 분야 선택`;
+            showScreen('category');
+        }
+
+        function handleCategorySelect(category) {
+            currentCategory = category;
+            showScreen('practiceMode');
+        }
+
+        function handlePracticeModeSelect(mode) {
+            practiceMode = mode;
+            if (mode === 'random') {
+                startRandomSession();
+            } else if (mode === 'topic') {
+                sessionHistory = [];
+                currentTopic = null; // 새로운 주제 선택 시 현재 주제 초기화
+                showScreen('topicInput');
+            }
+        }
+
+        function startRandomSession() {
+            remainingQuestions = questions.filter(q => q.school.includes(currentSchool) && q.category === currentCategory);
+            sessionHistory = [];
+             if (remainingQuestions.length === 0) {
+                alert('선택하신 학교와 분야에 해당하는 기출문제가 없습니다. 다른 옵션을 선택해주세요.');
+                showScreen('category');
+                return;
+            }
+            showScreen('practice');
+            displayNextQuestion();
+        }
+
+        function displayNextQuestion() {
+            if (remainingQuestions.length === 0) {
+                endSession();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
+            currentQuestion = remainingQuestions.splice(randomIndex, 1)[0];
+            
+            const schoolName = currentSchool === 'busan' ? '부산과학고' : '부산일과학고';
+            const categoryName = currentCategory === 'math' ? '수학' : '과학';
+            questionCategory.textContent = `[${schoolName} - ${categoryName} - 랜덤 기출]`;
+            questionText.textContent = currentQuestion.question;
+            
+            resetPracticeScreen();
+        }
+
+        async function handleTopicSubmit() {
+            const topic = topicInput.value.trim();
+            if (!topic) {
+                alert('주제를 입력해주세요.');
+                return;
+            }
+            currentTopic = topic;
+            await generateAndDisplayAIQuestion(currentTopic);
+        }
+
+        async function handleContinueTopic() {
+            if (!currentTopic) {
+                // 혹시 모를 예외 처리
+                showScreen('topicInput');
+                return;
+            }
+            await generateAndDisplayAIQuestion(currentTopic);
+        }
+
+        async function generateAndDisplayAIQuestion(topic) {
+            const isInitialTopicGeneration = document.getElementById('topic-input-screen').style.display !== 'none';
+
+            if (isInitialTopicGeneration) { // 주제 입력 화면에서 생성 버튼 누를 때
+                generateBtnText.textContent = '생성 중...';
+                generateSpinner.classList.remove('hidden');
+                generateQuestionButton.disabled = true;
+            } else { // "같은 주제로 계속하기" 버튼 누를 때
+                questionText.innerHTML = `<div class="flex items-center justify-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span>같은 주제로 새로운 질문을 생성 중입니다...</span></div>`;
+                resetPracticeScreen();
+            }
+
+            try {
+                const generatedQuestion = await getAIQuestion(topic, currentCategory);
+                currentQuestion = {
+                    question: generatedQuestion,
+                    modelAnswer: null
+                };
+                
+                const schoolName = currentSchool === 'busan' ? '부산과학고' : '부산일과학고';
+                const categoryName = currentCategory === 'math' ? '수학' : '과학';
+                questionCategory.textContent = `[${schoolName} - ${categoryName} - 주제: ${topic}]`;
+                questionText.textContent = currentQuestion.question;
+                
+                showScreen('practice');
+                resetPracticeScreen();
+
+            } catch (error) {
+                console.error("Error generating question:", error);
+                alert("질문 생성에 실패했습니다. 다시 시도해주세요.");
+                questionText.textContent = currentQuestion ? currentQuestion.question : "질문을 불러오지 못했습니다.";
+            } finally {
+                if (isInitialTopicGeneration) {
+                    generateBtnText.textContent = 'AI 질문 생성하기';
+                    generateSpinner.classList.add('hidden');
+                    generateQuestionButton.disabled = false;
+                    topicInput.value = '';
+                }
+            }
+        }
+
+
+        async function getAIQuestion(topic, category) {
+            const response = await fetch('/.netlify/functions/api', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'question', payload: { topic, category } })
+            });
+
+            if (!response.ok) throw new Error('Function request failed');
+            const result = await response.json();
+            return result.question;
+        }
+
+        async function handleAnswerSubmit() {
+            const userAnswer = answerTextarea.value.trim();
+            if (!userAnswer) {
+                alert('답변을 입력해주세요.');
+                return;
+            }
+
+            feedbackSection.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            feedbackResult.classList.add('hidden');
+            nextActions.classList.add('hidden');
+            submitAnswerButton.disabled = true;
+            backToModeFromPracticeButton.disabled = true;
+
+            try {
+                const feedback = await getAIFeedback(currentQuestion.question, userAnswer, currentQuestion.modelAnswer);
+                feedbackResult.innerHTML = markdownConverter.makeHtml(feedback);
+                sessionHistory.push({
+                    question: currentQuestion.question,
+                    answer: userAnswer,
+                    feedback: feedback
+                });
+            } catch (error) {
+                console.error("Error getting feedback:", error);
+                feedbackResult.innerHTML = "<p class='text-red-500'>피드백 생성에 실패했습니다. 다시 시도해주세요.</p>";
+            } finally {
+                loadingSpinner.classList.add('hidden');
+                feedbackResult.classList.remove('hidden');
+                nextActions.classList.remove('hidden');
+                
+                if(practiceMode === 'topic') {
+                    nextQuestionButton.classList.add('hidden');
+                    continueTopicButton.classList.remove('hidden');
+                    newTopicButton.classList.remove('hidden');
+                } else {
+                    nextQuestionButton.classList.remove('hidden');
+                    continueTopicButton.classList.add('hidden');
+                    newTopicButton.classList.add('hidden');
+                }
+                submitAnswerButton.disabled = false;
+                backToModeFromPracticeButton.disabled = false;
+            }
+        }
+
+        async function getAIFeedback(question, answer, modelAnswer) {
+            const response = await fetch('/.netlify/functions/api', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'feedback', payload: { question, answer, modelAnswer } })
+            });
+            if (!response.ok) throw new Error('Function request failed');
+            const result = await response.json();
+            return result.feedback;
+        }
+
+        function endSession() {
+            showScreen('report');
+            reportLoadingSpinner.classList.remove('hidden');
+            reportResult.classList.add('hidden');
+            generateReport();
+        }
+
+        async function generateReport() {
+            if (sessionHistory.length === 0) {
+                reportResult.innerHTML = "<p>진행된 면접 기록이 없어 리포트를 생성할 수 없습니다.</p>";
+                reportLoadingSpinner.classList.add('hidden');
+                reportResult.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const report = await getAIReport();
+                reportResult.innerHTML = markdownConverter.makeHtml(report);
+            } catch (error) {
+                console.error("Error generating report:", error);
+                reportResult.innerHTML = "<p class='text-red-500'>리포트 생성에 실패했습니다.</p>";
+            } finally {
+                reportLoadingSpinner.classList.add('hidden');
+                reportResult.classList.remove('hidden');
+            }
+        }
+
+        async function getAIReport() {
+            const response = await fetch('/.netlify/functions/api', {
+                method: 'POST',
+                body: JSON.stringify({ type: 'report', payload: { sessionHistory } })
+            });
+            if (!response.ok) throw new Error('Function request failed');
+            const result = await response.json();
+            return result.report;
+        }
+
+        function resetPracticeScreen() {
+            answerTextarea.value = '';
+            feedbackSection.classList.add('hidden');
+            nextActions.classList.add('hidden');
+            submitAnswerButton.disabled = false;
+            backToModeFromPracticeButton.disabled = false;
+        }
+        
+        function restartSession() {
+            currentSchool = null;
+            currentCategory = null;
+            practiceMode = null;
+            currentTopic = null;
+            remainingQuestions = [];
+            currentQuestion = null;
+            sessionHistory = [];
+            showScreen('school');
+        }
+
+        // --- 이벤트 리스너 ---
+        function init() {
+            initializeFirebase(); // 앱 시작 시 Firebase 초기화
+
+            loginButton.addEventListener('click', handleLogin);
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleLogin();
+            });
+
+            schoolButtons.forEach(button => {
+                button.addEventListener('click', () => handleSchoolSelect(button.dataset.school));
+            });
+
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', () => handleCategorySelect(button.dataset.category));
+            });
+            
+            practiceModeButtons.forEach(button => {
+                button.addEventListener('click', () => handlePracticeModeSelect(button.dataset.mode));
+            });
+            
+            generateQuestionButton.addEventListener('click', handleTopicSubmit);
+            topicInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleTopicSubmit();
+            });
+
+            submitAnswerButton.addEventListener('click', handleAnswerSubmit);
+            nextQuestionButton.addEventListener('click', displayNextQuestion);
+            continueTopicButton.addEventListener('click', handleContinueTopic);
+            newTopicButton.addEventListener('click', () => {
+                currentTopic = null;
+                showScreen('topicInput');
+            });
+            endSessionButton.addEventListener('click', endSession);
+            restartButton.addEventListener('click', restartSession);
+            
+            // Back buttons
+            backToSchoolButton.addEventListener('click', () => showScreen('school'));
+            backToCategoryButton.addEventListener('click', () => showScreen('category'));
+            backToModeButton.addEventListener('click', () => showScreen('practiceMode'));
+            backToModeFromPracticeButton.addEventListener('click', () => {
+                currentQuestion = null;
+                showScreen('practiceMode');
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
