@@ -1,0 +1,10 @@
+# Netlify Deploy Settings
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# Single Page App (SPA) redirect rule
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
