@@ -1,0 +1,11 @@
+# Netlify Deploy Settings
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# This is the "Single Page App" rule. 
+# It ensures that any direct URL request loads the main index.html file.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
