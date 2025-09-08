@@ -3,7 +3,8 @@
   publish = "public"
   functions = "netlify/functions"
 
-# Single Page App (SPA) redirect rule
+# This is the "Single Page App" rule. 
+# It ensures that any direct URL request loads the main index.html file.
 [[redirects]]
   from = "/*"
   to = "/index.html"
